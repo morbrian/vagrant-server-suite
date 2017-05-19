@@ -1,0 +1,43 @@
+---
+
+- name: Check for {{ staging_folder }}/java/{{ jdk_archive_file }} on local
+  local_action: stat path={{ staging_folder }}/java/{{ jdk_archive_file }}
+  become: no
+  register: jdk_archive_local_src
+
+- name: Copy {{ staging_folder }}/java/{{ jdk_archive_file }} if available
+  copy:
+    src: "{{ staging_folder }}/java/{{ jdk_archive_file }}"
+    dest: /tmp/{{ jdk_archive_file }}
+  when: jdk_archive_local_src.stat.exists == True
+
+- name: Download oracle jdk archive
+  get_url:
+    url:     "{{ jdk_download_url }}"
+    headers: 'Cookie:oraclelicense=accept-securebackup-cookie'
+    dest:    "/tmp/{{ jdk_archive_file }}"
+  when: jdk_archive_local_src.stat.exists == False
+
+- name: Extract oracle-jdk archive
+  unarchive:
+    src: /tmp/{{jdk_archive_file}}
+    dest: /opt
+    remote_src: yes
+
+- name: alternatives --install
+  shell: alternatives --install /usr/bin/{{item}} {{item}} /opt/{{jdk_extract_dir}}/bin/{{item}} 2
+  with_items:
+    - java
+    - jar
+    - javac
+
+- name: alternatives --set
+  shell: alternatives --set {{item}} /opt/{{jdk_extract_dir}}/bin/{{item}}
+  with_items:
+    - java
+    - jar
+    - javac
+
+- name: Register /etc/profile
+  template: src=profile.d/java.sh dest=/etc/profile.d/java.sh owner=root group=root mode=0744
+
