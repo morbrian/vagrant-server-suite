@@ -7,6 +7,7 @@ jdk_extract_dir: jdk1.8.0_131
 tomcat_version: 8.0.43
 
 http_port: 8080
+https_port: 8443
 ajp_port: 8009
 
 ipv6_disable: True

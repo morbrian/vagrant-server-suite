@@ -39,13 +39,6 @@
 - name: Remove logging.properties
   file: path=/opt/apache-tomcat-{{ tomcat_version }}/conf/logging.properties state=absent
 
-# TODO: logback libraries were stored internal to repository at tomcat8/files/tomcat/lib,
-#       which we don't want. if we want logback, get the files from maven or off staging disk,
-#       but avoid storing in this repository.
-#       libs were: logback-access-1.1.2.jar, logback-core-1.1.2.jar, slf4j-api-1.7.7.jar
-#- name: Add logback libralies
-#  copy: src=tomcat/lib dest=/opt/apache-tomcat-{{tomcat_version}}/
-
 - name: Add tomcat environment file
   template: src=tomcat/bin/setenv.sh dest=/opt/apache-tomcat-{{ tomcat_version }}/bin/setenv.sh mode=0755
 
@@ -55,14 +48,8 @@
     - server.xml
     - tomcat-users.xml
 
-- name: Add tomcat configuration files
-  copy: src=tomcat/conf/{{ item }} dest=/opt/apache-tomcat-{{ tomcat_version }}/conf/{{ item }}
-  with_items:
-    - logback.xml
-    - logback-access.xml
-
 - name: Remove home directory symlink
-  shell: rm -f /opt/tomcat removes=/opt/tomcat
+  file: path=/opt/tomcat state=absent
 
 - name: Create home directory symlink (Temporary for useradd)
   file: src=/opt/apache-tomcat-{{ tomcat_version }} path=/opt/tomcat state=link
@@ -74,7 +61,7 @@
   user: name=tomcat group=tomcat home=/opt/tomcat
 
 - name: Remove home directory symlink (again)
-  shell: rm -f /opt/tomcat removes=/opt/tomcat
+  file: path=/opt/tomcat state=absent
 
 - name: Change tomcat directory permissions
   file: path=/opt/apache-tomcat-{{ tomcat_version }} owner=tomcat group=tomcat state=directory recurse=yes
@@ -83,22 +70,14 @@
   file: src=/opt/apache-tomcat-{{ tomcat_version }} owner=tomcat group=tomcat path=/opt/tomcat state=link
 
 - name: Add tomcat systemd unit file
-  copy: src=systemd/tomcat.service dest=/usr/lib/systemd/system/tomcat.service owner=root group=root
+  copy: src=sysvinit/tomcat-initscript.sh dest=/etc/init.d/tomcat owner=root group=root mode=0755
 
-- name: systemd daemon-reload
-  shell: systemctl daemon-reload
+- name: Start Tomcat
+  service: name=tomcat state=started enabled=yes
 
-- name: Start tomcat
-  service: name=tomcat state=restarted enabled=yes
-
-- name: Add firewalld service file
-  template: src=firewalld/tomcat.xml dest=/usr/lib/firewalld/services/tomcat.xml owner=root group=root
-
-- name: Restart firewalld
-  service: name=firewalld state=restarted enabled=yes
-
-- name: Expose tomcat
-  shell: firewall-cmd --add-service=tomcat --zone=public --permanent
+- name: deploy iptables rules
+  template: src=iptables/iptables-save dest=/etc/sysconfig/iptables
+  notify: restart iptables
 
 - name: Wait for tomcat started
   wait_for: port={{ http_port }}

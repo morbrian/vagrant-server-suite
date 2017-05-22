@@ -24,6 +24,9 @@
     dest: /opt
     remote_src: yes
 
+- name: Link for java home
+  file: src=/opt/{{jdk_extract_dir}} owner=root group=root path=/opt/jdk-default state=link
+
 - name: alternatives --install
   shell: alternatives --install /usr/bin/{{item}} {{item}} /opt/{{jdk_extract_dir}}/bin/{{item}} 2
   with_items:

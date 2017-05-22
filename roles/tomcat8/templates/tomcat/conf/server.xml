@@ -55,8 +55,8 @@
       </Realm>
 
       <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true" copyXML="true">
-        <Valve className="ch.qos.logback.access.tomcat.LogbackValve" quiet="true"
-               filename="${catalina.home}/conf/logback-access.xml" />
+        <!--<Valve className="ch.qos.logback.access.tomcat.LogbackValve" quiet="true"-->
+               <!--filename="${catalina.home}/conf/logback-access.xml" />-->
       </Host>
 
     </Engine>
