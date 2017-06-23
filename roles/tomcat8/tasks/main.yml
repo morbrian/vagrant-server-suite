@@ -1,7 +1,7 @@
 ---
 
-- name: Check for {{ staging_folder }}/tomcat/apache-tomcat-{{tomcat_version}}.tar.gz  on local
-  local_action: stat path={{ staging_folder }}/java/{{ jdk_archive_file }}
+- name: Check for {{ staging_folder }}/tomcat/apache-tomcat-{{ tomcat_version }}.tar.gz  on local
+  local_action: stat path={{ staging_folder }}/tomcat/apache-tomcat-{{ tomcat_version }}.tar.gz 
   become: no
   register: tomcat_archive_local_src
 
@@ -9,12 +9,12 @@
   copy:
     src: "{{ staging_folder }}/tomcat/apache-tomcat-{{ tomcat_version }}.tar.gz"
     dest: /tmp/apache-tomcat-{{ tomcat_version }}.tar.gz
-  when: jdk_archive_local_src.stat.exists == True
+  when: tomcat_archive_local_src.stat.exists == True
 
 - name: Download tomcat
   get_url: url=http://archive.apache.org/dist/tomcat/tomcat-8/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
            dest=/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz
-  when: jdk_archive_local_src.stat.exists == False
+  when: tomcat_archive_local_src.stat.exists == False
 
 - name: Extract tomcat archive
   unarchive:
